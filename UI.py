@@ -45,7 +45,7 @@ def now(select_back):
     ask_auto = _auto()
     if not ask_auto:
         hand_number.main_hand()
-    filename = r'C:\Users\10583\Desktop\ML_num\images\text.png'
+    filename = './images/text.png'
     # 询问真值
     real_num = lambda: askinteger("真实值?", "请输入真实值")
     rn = real_num()
