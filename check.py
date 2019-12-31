@@ -14,6 +14,3 @@ def check():
     rename_file('testDigits', 'testDigits(测试)')
     rename_file('test_temp', 'testDigits')
     return test_number, error_sum, mistakes_num, total_time, result_list, testFileList
-
-if __name__ == '__main__':
-    pass
