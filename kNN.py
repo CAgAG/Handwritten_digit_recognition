@@ -1,9 +1,9 @@
-from os import listdir
-import numpy as np
 import operator
 import datetime
 import pickle
 import os
+
+import numpy as np
 
 
 def KNN(test_data, train_data, train_label, k):
@@ -40,11 +40,13 @@ def img2vector(filename):
 
 
 # 从文件名中解析分类数字
-def classnumCut(fileName):
+def classNum(fileName):
     # 参考文件名格式为：0_0.txt
-    fileStr = fileName.split('.')[0]
-    classNumStr = int(fileStr.split('_')[0])
-    return classNumStr
+    fileStr, file_type = fileName.split('.')
+    if file_type == 'txt':
+        classNumStr = int(fileStr.split('_')[0])
+        return classNumStr
+    return None
 
 
 # 构建训练集数据向量，及对应分类标签向量
@@ -53,7 +55,7 @@ def trainingDataSet():
         os.remove('data_set/train_set_label.pk1')
         os.remove('data_set/train_set_data.npy')
     train_label = []
-    trainingFileList = listdir('trainingDigits')
+    trainingFileList = os.listdir('trainingDigits')
     m = len(trainingFileList)
     train_data = np.zeros((m, 1024))
     # 获取训练集的标签
@@ -61,8 +63,14 @@ def trainingDataSet():
         # fileNameStr:所有训练集文件名
         fileNameStr = trainingFileList[i]
         # 得到训练集索引
-        train_label.append(classnumCut(fileNameStr))
-        train_data[i, :] = img2vector('trainingDigits/%s' % fileNameStr)
+        classNumStr = classNum(fileNameStr)
+        if classNumStr is not None:
+            train_label.append(classNumStr)
+            train_data[i, :] = img2vector('trainingDigits/%s' % fileNameStr)
+
+    # 删除全零行
+    # To remove all rows that contain only 0
+    train_data = train_data[~np.all(train_data == 0, axis=1)]
     # 永久化储存
     out_label = open('data_set/train_set_label.pk1', 'wb')
     pickle.dump(train_label, out_label)
@@ -88,7 +96,7 @@ def main(trained=1, close_number=3):
         train_label = pickle.load(pk_file)
         pk_file.close()
         train_data = np.load('data_set/train_set_data.npy')
-    testFileList = listdir('testDigits')
+    testFileList = os.listdir('testDigits')
     error_sum = 0
     test_number = len(testFileList)
     result_list = []
@@ -96,13 +104,14 @@ def main(trained=1, close_number=3):
         # 测试集文件名
         fileNameStr = testFileList[i]
         # 切片后得到测试集索引
-        classNumStr = classnumCut(fileNameStr)
-        test_data = img2vector('testDigits/%s' % fileNameStr)
-        # 调用knn算法进行测试
-        classifierResult = KNN(test_data, train_data, train_label, Nearest_Neighbor_number)
-        result_list.append("第" + str(i + 1) + "组：" + "预测值:" + str(classifierResult) + "真实值:" + str(classNumStr))
-        if (classifierResult != classNumStr):
-            error_sum += 1.0
+        classNumStr = classNum(fileNameStr)
+        if classNumStr is not None:
+            test_data = img2vector('testDigits/%s' % fileNameStr)
+            # 调用knn算法进行测试
+            classifierResult = KNN(test_data, train_data, train_label, Nearest_Neighbor_number)
+            result_list.append("第" + str(i + 1) + "组：" + "预测值:" + str(classifierResult) + "真实值:" + str(classNumStr))
+            if (classifierResult != classNumStr):
+                error_sum += 1.0
     # print("\n测试集总数为:", test_number)
     # print("测试出错总数:", error_sum)
     # print("\n错误率:", error_sum / float(test_number) * 100, '%')

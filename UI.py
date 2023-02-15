@@ -5,11 +5,10 @@ import webbrowser
 from tkinter import Tk, Label, Button, messagebox
 from tkinter.simpledialog import askinteger
 
-import check
-import get_next_num
+import utils
 import hand_number
 import kNN
-import vedio_cut
+import video_cap
 import zero_one
 
 root = Tk()
@@ -27,7 +26,7 @@ def copy_file(filepath, tofilepath):
 # 打开图像文件
 def Open():
     filename = tkinter.filedialog.askopenfilename(title='Open Image',
-                                                  filetypes=[('image', '*.png')])
+                                                  filetypes=[('image', '*.png *.jpg')])
     if filename:
         global image_src
         image_src = tkinter.PhotoImage(file=filename)
@@ -58,10 +57,12 @@ def now(select_back):
             rn = real_num()
         else:
             return
+
+    save_txt_path = '{}_{}'.format(str(rn), utils.file_dir(rn))
     if not ask_auto:
-        zero_one.save_pic_to_file('{}_{}'.format(str(rn), get_next_num.file_dir(rn)), mode=0)
+        zero_one.save_pic_to_file(save_txt_path, mode=0)
     else:
-        zero_one.save_pic_to_file('{}_{}'.format(str(rn), get_next_num.file_dir(rn)), path='images/src.png', mode=1)
+        zero_one.save_pic_to_file(save_txt_path, path='images/src.png', mode=1)
     # 显示灰度图
     global image_text
     image_text = tkinter.PhotoImage(file=filename)
@@ -70,6 +71,7 @@ def now(select_back):
     test_num, error_sum, mistake_num, total_time, result_list, testFileList = kNN.main(trained=select_back.get())
     show_result.insert(0,
                        "测试集总数为:" + test_num + ' ' + '测试出错总数:' + error_sum + ' ' + '错误率:' + mistake_num + ' ' + '耗 时 = ' + total_time)
+    lb.config(text="选择的图像文件对应的二值化文件是: {}.txt".format(save_txt_path))
     for i in range(1, len(result_list) + 1):
         show_result.insert(i, result_list[i - 1] + ' 文件名: ' + testFileList[i - 1])
 
@@ -117,7 +119,7 @@ def testDigit():
         else:
             num = show_file.get(selection)
             copy_file('testDigits/{}'.format(num),
-                      "trainingDigits/{}_{}.txt".format(num[0], get_next_num.file_dir(num[0], 'trainingDigits/') - 1))
+                      "trainingDigits/{}_{}.txt".format(num[0], utils.file_dir(num[0], 'trainingDigits/') - 1))
             show_file.delete(selection)
 
     del_button = Button(op_test, text='删除', command=del_file)
@@ -131,7 +133,7 @@ def get_num():
     show_result.delete(0, tkinter.END)
     check_TestDigit = messagebox.askyesno('查看正确率或测试集识别结果', '是否查看正确率')
     if check_TestDigit:
-        test_num, error_sum, mistake_num, total_time, result_list, testFileList = check.check()
+        test_num, error_sum, mistake_num, total_time, result_list, testFileList = utils.check()
     else:
         try:
             test_num, error_sum, mistake_num, total_time, result_list, testFileList = kNN.main()
@@ -150,19 +152,19 @@ lb.pack()
 select_file = Button(root, text="选择文件", command=Open)
 select_file.place(x=10, y=20, height=40, width=200)
 
-cama = Button(root, text='摄像头', command=vedio_cut.get_img_from_camera_local)
+cama = Button(root, text='摄像头', command=video_cap.get_img_from_camera_local)
 cama.place(x=220, y=20, height=40, width=200)
 result = Button(root, text='开始识别', command=lambda: now(select_back))
 result.place(x=430, y=20, height=40, width=200)
-label_back = tkinter.Label(root, text='使用备份:')
+label_back = tkinter.Label(root, text='使用备份数据:')
 label_back.place(x=640, y=30, height=20)
 # 1为使用, 0为不使用
 select_back = tkinter.IntVar()
 select_back.set(1)
 radioBack = tkinter.Radiobutton(root, variable=select_back, value=1, text='是')
-radioBack.place(x=700, y=30, width=40, height=20)
+radioBack.place(x=725, y=30, width=40, height=20)
 radioNew = tkinter.Radiobutton(root, variable=select_back, value=0, text='否')
-radioNew.place(x=745, y=30, width=40, height=20)
+radioNew.place(x=770, y=30, width=40, height=20)
 
 # 画板
 # 创建画布
@@ -187,17 +189,17 @@ scroll.config(command=show_result.yview)
 menu = tkinter.Menu(root)
 # 数据操作
 submenu = tkinter.Menu(menu, tearoff=0)
-submenu.add_command(label='SEE', command=see)
-submenu.add_command(label='testDigit', command=testDigit)
+submenu.add_command(label='Show test data', command=see)
+submenu.add_command(label='TestDigit operation', command=testDigit)
 # submenu.add_command(label='DELETE_image', command=None)
 menu.add_cascade(label='Digit', menu=submenu)
 
 # About
 submenu = tkinter.Menu(menu, tearoff=0)
-submenu.add_command(label='ABOUT ME', command=lambda: messagebox.showinfo(title='关于我', message='kNN'))
+submenu.add_command(label='Author', command=lambda: messagebox.showinfo(title='关于我', message='CAgAG'))
 submenu.add_command(label='Help', command=openword)
-submenu.add_command(label='CHECK', command=get_num)
-menu.add_cascade(label='ABOUT', menu=submenu)
+submenu.add_command(label='Valid test data', command=get_num)
+menu.add_cascade(label='About', menu=submenu)
 root.config(menu=menu)
 
 if __name__ == '__main__':
