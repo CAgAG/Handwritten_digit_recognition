@@ -31,11 +31,11 @@ def KNN(test_data, train_data, train_label, k):
 # 文本向量化 32x32 -> 1x1024
 def img2vector(filename):
     returnVect = []
-    fr = open(filename)
-    for i in range(32):
-        lineStr = fr.readline()
-        for j in range(32):
-            returnVect.append(int(lineStr[j]))
+    with open(filename) as fr:
+        for i in range(32):
+            lineStr = fr.readline()
+            for j in range(32):
+                returnVect.append(int(lineStr[j]))
     return returnVect
 
 
@@ -98,20 +98,21 @@ def main(trained=1, close_number=3):
         train_data = np.load('data_set/train_set_data.npy')
     testFileList = os.listdir('testDigits')
     error_sum = 0
-    test_number = len(testFileList)
+    test_number = 0
     result_list = []
-    for i in range(test_number):
+    for fileNameStr in testFileList:
         # 测试集文件名
-        fileNameStr = testFileList[i]
         # 切片后得到测试集索引
         classNumStr = classNum(fileNameStr)
         if classNumStr is not None:
             test_data = img2vector('testDigits/%s' % fileNameStr)
             # 调用knn算法进行测试
             classifierResult = KNN(test_data, train_data, train_label, Nearest_Neighbor_number)
-            result_list.append("第" + str(i + 1) + "组：" + "预测值:" + str(classifierResult) + "真实值:" + str(classNumStr))
+            result_list.append("第" + str(test_number + 1) + "组：" +
+                               "预测值:" + str(classifierResult) + "真实值:" + str(classNumStr))
             if (classifierResult != classNumStr):
                 error_sum += 1.0
+            test_number += 1
     # print("\n测试集总数为:", test_number)
     # print("测试出错总数:", error_sum)
     # print("\n错误率:", error_sum / float(test_number) * 100, '%')
